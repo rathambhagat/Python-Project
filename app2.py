@@ -4,6 +4,7 @@
 #  Author    : Expert Data Scientist / UI-UX Developer
 # =============================================================================
 
+import io
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -293,13 +294,13 @@ REQUIRED_COLS = {"Date", "Open", "High", "Low", "Close"}
 @st.cache_data(show_spinner=False)
 def load_data(file_bytes: bytes, filename: str) -> pd.DataFrame:
     """Read CSV, parse dates, sort chronologically."""
-    df = pd.read_csv(file_bytes)
+    df = pd.read_csv(io.BytesIO(file_bytes))
 
     # Normalise column names (strip whitespace)
     df.columns = df.columns.str.strip()
 
     # Parse Date — try multiple common formats
-    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, infer_datetime_format=True)
+    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True)
     df.sort_values("Date", inplace=True)
     df.reset_index(drop=True, inplace=True)
 
@@ -314,7 +315,7 @@ def load_data(file_bytes: bytes, filename: str) -> pd.DataFrame:
 
 with st.spinner("Parsing your data…"):
     try:
-        df_raw = load_data(uploaded_file, uploaded_file.name)
+        df_raw = load_data(uploaded_file.getvalue(), uploaded_file.name)
     except Exception as e:
         st.error(f"❌ Could not read the file: {e}")
         st.stop()
